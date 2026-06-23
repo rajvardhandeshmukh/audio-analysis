@@ -59,8 +59,10 @@ class OpenAIWhisperSTTProvider(STTProvider):
         Returns:
             (raw_text, detected_language, average_word_probability, word_timestamps)
         """
+        import time
         try:
             with open(audio_path, "rb") as audio_file:
+                start_time = time.perf_counter()
                 response = await self._client.audio.transcriptions.create(
                     model=self._settings.openai_stt_model,
                     file=audio_file,
@@ -69,6 +71,7 @@ class OpenAIWhisperSTTProvider(STTProvider):
                     timestamp_granularities=["word"],
                     temperature=self._settings.openai_stt_temperature,
                 )
+                duration_ms = int((time.perf_counter() - start_time) * 1000)
         except RateLimitError as exc:
             raise ProviderRateLimitError(
                 f"Whisper rate limit exceeded: {exc}"
@@ -116,6 +119,7 @@ class OpenAIWhisperSTTProvider(STTProvider):
             language=detected_language,
             word_count=len(word_timestamps),
             confidence=round(confidence, 3),
+            duration_ms=duration_ms,
         )
         return raw_text, detected_language, confidence, word_timestamps
 

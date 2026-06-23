@@ -7,6 +7,7 @@ Two operations, two structured calls:
 """
 
 import json
+import time
 
 from openai import AsyncOpenAI, RateLimitError
 from pydantic import BaseModel
@@ -97,6 +98,7 @@ class OpenAIRepairProvider(RepairProvider):
             f"{audio_metadata.channels}ch"
         )
         try:
+            start_time = time.perf_counter()
             response = await self._client.chat.completions.create(
                 model=self._settings.openai_repair_model,
                 temperature=self._settings.openai_repair_temperature,
@@ -108,6 +110,8 @@ class OpenAIRepairProvider(RepairProvider):
                     },
                 ],
             )
+            duration_ms = int((time.perf_counter() - start_time) * 1000)
+            tokens = response.usage
         except RateLimitError as exc:
             raise ProviderRateLimitError(f"Repair rate limit: {exc}") from exc
         except Exception as exc:
@@ -118,6 +122,10 @@ class OpenAIRepairProvider(RepairProvider):
             "repair.transcript_fixed",
             raw_chars=len(raw_text),
             repaired_chars=len(repaired),
+            duration_ms=duration_ms,
+            prompt_tokens=tokens.prompt_tokens if tokens else 0,
+            completion_tokens=tokens.completion_tokens if tokens else 0,
+            total_tokens=tokens.total_tokens if tokens else 0,
         )
         return repaired
 
@@ -148,6 +156,7 @@ class OpenAIRepairProvider(RepairProvider):
         )
 
         try:
+            start_time = time.perf_counter()
             response = await self._client.beta.chat.completions.parse(
                 model=self._settings.openai_repair_model,
                 temperature=self._settings.openai_repair_temperature,
@@ -157,6 +166,8 @@ class OpenAIRepairProvider(RepairProvider):
                 ],
                 response_format=_DiarizationOutput,
             )
+            duration_ms = int((time.perf_counter() - start_time) * 1000)
+            tokens = response.usage
         except RateLimitError as exc:
             raise ProviderRateLimitError(f"Diarization rate limit: {exc}") from exc
         except Exception as exc:
@@ -180,6 +191,10 @@ class OpenAIRepairProvider(RepairProvider):
             "repair.diarized",
             turn_count=len(segments),
             speakers=list({s.speaker_id for s in segments}),
+            duration_ms=duration_ms,
+            prompt_tokens=tokens.prompt_tokens if tokens else 0,
+            completion_tokens=tokens.completion_tokens if tokens else 0,
+            total_tokens=tokens.total_tokens if tokens else 0,
         )
         return segments
 

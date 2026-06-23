@@ -11,6 +11,7 @@ Rule 19: nack(requeue=False) routes to DLQ. No retry loops in code.
 import asyncio
 import signal
 import tempfile
+import time
 from abc import ABC, abstractmethod
 from typing import Any
 
@@ -103,7 +104,15 @@ class BaseWorker(ABC):
                 async with get_engine().connect() as conn:
                     repos = build_repositories(conn)
                     try:
+                        start_time = time.perf_counter()
                         await self.process(message, repos)
+                        duration_sec = round(time.perf_counter() - start_time, 2)
+                        
+                        logger.info(
+                            "worker.process_completed",
+                            worker=self.worker_name,
+                            duration_sec=duration_sec,
+                        )
                         await ack.ack()
                     except DomainError as exc:
                         logger.error(

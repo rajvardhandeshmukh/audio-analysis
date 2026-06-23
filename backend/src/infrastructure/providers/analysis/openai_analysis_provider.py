@@ -5,6 +5,7 @@ Rule 27: All LLM output is structured — GPT-4o's parse() API enforces the sche
 CallMetrics are computed locally from speaker segments (no LLM needed).
 """
 
+import time
 from openai import AsyncOpenAI, RateLimitError
 from pydantic import BaseModel, Field
 
@@ -108,6 +109,7 @@ class OpenAIAnalysisProvider(AnalysisProvider):
         prompt = _build_analysis_prompt(transcript, audio_metadata, call_metrics)
 
         try:
+            start_time = time.perf_counter()
             response = await self._client.beta.chat.completions.parse(
                 model=self._settings.openai_analysis_model,
                 temperature=self._settings.openai_analysis_temperature,
@@ -117,6 +119,8 @@ class OpenAIAnalysisProvider(AnalysisProvider):
                 ],
                 response_format=_AnalysisLLMOutput,
             )
+            duration_ms = int((time.perf_counter() - start_time) * 1000)
+            tokens = response.usage
         except RateLimitError as exc:
             raise ProviderRateLimitError(f"Analysis rate limit: {exc}") from exc
         except Exception as exc:
@@ -153,6 +157,10 @@ class OpenAIAnalysisProvider(AnalysisProvider):
             job_id=str(transcript.job_id),
             agent_score=analysis.agent_performance_score,
             compliance_passed=analysis.compliance_passed,
+            duration_ms=duration_ms,
+            prompt_tokens=tokens.prompt_tokens if tokens else 0,
+            completion_tokens=tokens.completion_tokens if tokens else 0,
+            total_tokens=tokens.total_tokens if tokens else 0,
         )
         return analysis
 
