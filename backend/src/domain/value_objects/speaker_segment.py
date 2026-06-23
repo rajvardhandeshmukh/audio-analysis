@@ -14,8 +14,8 @@ class SpeakerSegment(BaseModel):
 
     speaker_id: str = Field(
         ...,
-        pattern=r"^SPEAKER_\d+$",
-        description="Diarization label e.g. 'SPEAKER_0', 'SPEAKER_1'",
+        pattern=r"^(SPEAKER_\d+|AGENT|CUSTOMER)$",
+        description="Diarization label e.g. 'AGENT', 'CUSTOMER', or 'SPEAKER_0'",
     )
     start_time: float = Field(..., ge=0.0, description="Segment start in seconds")
     end_time: float = Field(..., gt=0.0, description="Segment end in seconds")
