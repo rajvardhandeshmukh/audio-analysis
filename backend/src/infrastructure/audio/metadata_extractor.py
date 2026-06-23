@@ -72,6 +72,6 @@ def extract(local_path: str) -> AudioMetadata:
         duration_seconds=duration_seconds,
         sample_rate=sample_rate,
         channels=channels,
-        bitrate_kbps=bitrate_kbps,
-        file_size_bytes=file_size_bytes,
+        bit_rate=bitrate_kbps * 1000 if bitrate_kbps else None,
+        size_bytes=file_size_bytes,
     )
