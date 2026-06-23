@@ -44,6 +44,10 @@ class RepositoryContainer:
     user: PostgresUserRepository
     job_event: PostgresJobEventRepository
 
+    async def commit(self) -> None:
+        """Explicitly commit the underlying connection transaction."""
+        await self.audio_job._conn.commit()
+
 
 @dataclass(frozen=True)
 class ServiceContainer:

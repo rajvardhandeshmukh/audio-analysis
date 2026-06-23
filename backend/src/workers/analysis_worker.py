@@ -65,6 +65,7 @@ class AnalysisWorker(BaseWorker):
 
         analysis = await self._analysis.analyze(transcript, audio_metadata)
         saved = await repos.analysis.create(analysis)
+        await repos.commit()
 
         next_msg = AnalysisCompletedMessage(
             job_id=job_id,

@@ -76,6 +76,7 @@ class RepairWorker(BaseWorker):
         transcript.apply_diarization(segments)
 
         await repos.transcript.update(transcript)
+        await repos.commit()
 
         next_msg = RepairCompletedMessage(
             job_id=job_id,

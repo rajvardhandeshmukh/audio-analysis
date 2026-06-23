@@ -77,6 +77,7 @@ class STTWorker(BaseWorker):
             word_timestamps=word_timestamps,
         )
         saved = await repos.transcript.create(transcript)
+        await repos.commit()
 
         next_msg = STTCompletedMessage(
             job_id=job_id,

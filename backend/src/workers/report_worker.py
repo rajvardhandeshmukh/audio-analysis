@@ -84,6 +84,7 @@ class ReportWorker(BaseWorker):
 
         job.advance_to(JobStatus.COMPLETED)
         await repos.audio_job.update(job)
+        await repos.commit()
 
         next_msg = ReportCompletedMessage(job_id=job_id, report_id=saved_report.id)
         await self._publisher.publish(QueueNames.REPORT, next_msg)
