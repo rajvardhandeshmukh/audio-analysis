@@ -80,16 +80,28 @@ class OpenAIWhisperSTTProvider(STTProvider):
         detected_language: str = getattr(response, "language", language or "en")
 
         words = getattr(response, "words", None) or []
-        word_timestamps: list[WordTimestamp] = [
-            WordTimestamp(
-                word=w.get("word", "").strip(),
-                start=float(w.get("start", 0.0)),
-                end=float(w.get("end", 0.0)),
-                probability=float(w.get("probability", 1.0)),
-            )
-            for w in words
-            if w.get("word", "").strip()
-        ]
+        word_timestamps: list[WordTimestamp] = []
+        for w in words:
+            if isinstance(w, dict):
+                text = w.get("word", "")
+                start = w.get("start", 0.0)
+                end = w.get("end", 0.0)
+                prob = w.get("probability", 1.0)
+            else:
+                text = getattr(w, "word", "")
+                start = getattr(w, "start", 0.0)
+                end = getattr(w, "end", 0.0)
+                prob = getattr(w, "probability", 1.0)
+            
+            if text.strip():
+                word_timestamps.append(
+                    WordTimestamp(
+                        word=text.strip(),
+                        start=float(start),
+                        end=float(end),
+                        probability=float(prob),
+                    )
+                )
 
         # Average word probability as a proxy for overall confidence
         confidence = (
