@@ -22,12 +22,13 @@ from src.presentation.api.response import ApiResponse
 router = APIRouter(prefix="/sources", tags=["Sources"])
 
 
+from src.domain.enums.source_type import SourceType
+
 class CreateSourceRequest(BaseModel):
     name: str
-    source_type: str
+    source_type: SourceType
     path: str
     file_patterns: list[str] = ["*.mp3", "*.wav", "*.m4a"]
-
 
 class UpdateSourceRequest(BaseModel):
     name: str | None = None

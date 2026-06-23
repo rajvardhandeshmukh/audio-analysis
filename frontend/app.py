@@ -5,7 +5,7 @@ import os
 
 BASE_URL = "http://localhost:8000/api/v1"
 
-st.set_page_config(page_title="QubeFini Audio AI", page_icon="🎙️", layout="wide")
+st.set_page_config(page_title=" Audio analysis", page_icon="🎙️", layout="wide")
 
 # Initialize Session State
 if "token" not in st.session_state:
@@ -61,7 +61,7 @@ if uploaded_file and not st.session_state.job_id:
             with st.spinner("Setting up storage source..."):
                 r = httpx.post(f"{BASE_URL}/sources", json={
                     "name": "Streamlit Uploads",
-                    "source_type": "filesystem",
+                    "source_type": "local_filesystem",
                     "path": "/streamlit_uploads",
                     "file_patterns": ["*.mp3", "*.wav"]
                 }, headers=headers)
