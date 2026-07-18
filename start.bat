@@ -5,8 +5,8 @@ echo ==============================================================
 taskkill /F /IM minio.exe 2>NUL
 taskkill /F /IM memurai.exe 2>NUL
 
-:: Target only python processes running this project's workers, backend, or Streamlit app
-powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \"name = 'python.exe'\" | Where-Object { ($_.CommandLine -like '*worker_main.py*' -or $_.CommandLine -like '*uvicorn*' -or $_.CommandLine -like '*streamlit*') -and $_.CommandLine -like '*audio-analysis*' } | Stop-Process -Force" 2>NUL
+:: Clean up any leftover processes listening on our ports (8000=FastAPI, 8501=Streamlit, 9000/9001=MinIO)
+powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort 8000, 8501, 9000, 9001 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }" 2>NUL
 
 echo.
 echo ==============================================================
