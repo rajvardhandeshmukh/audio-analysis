@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "audio-analysis-backend"
 version = "0.1.0"
 description = "Audio Analysis Platform — Call Center & Sales Call Behavioral Analysis"
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 dependencies = [
     # Web framework
     "fastapi>=0.111.0",
@@ -81,7 +81,7 @@ select = ["E", "F", "I", "UP", "B", "SIM", "TCH", "ANN"]
 ignore = ["ANN101", "ANN102"]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.11"
 strict = true
 ignore_missing_imports = true
 plugins = ["pydantic.mypy"]

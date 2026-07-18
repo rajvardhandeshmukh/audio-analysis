@@ -33,6 +33,7 @@ def _row_to_entity(row: sa.engine.Row) -> AudioJob:  # type: ignore[type-arg]
         status=JobStatus(row.status),
         file_name=row.file_name,
         original_path=row.original_path,
+        file_hash=row.file_hash if hasattr(row, "file_hash") else None,
         storage_path=row.storage_path,
         metadata=metadata,
         error_message=row.error_message,
@@ -58,6 +59,7 @@ class PostgresAudioJobRepository(AudioJobRepository):
                 status=job.status.value,
                 file_name=job.file_name,
                 original_path=job.original_path,
+                file_hash=job.file_hash,
                 storage_path=job.storage_path,
                 metadata=job.metadata.model_dump() if job.metadata else None,
                 error_message=job.error_message,
@@ -85,6 +87,7 @@ class PostgresAudioJobRepository(AudioJobRepository):
             .where(audio_jobs_table.c.id == job.id)
             .values(
                 status=job.status.value,
+                file_hash=job.file_hash,
                 storage_path=job.storage_path,
                 metadata=job.metadata.model_dump() if job.metadata else None,
                 error_message=job.error_message,
@@ -142,6 +145,16 @@ class PostgresAudioJobRepository(AudioJobRepository):
                 )
             )
         )
+        result = await self._conn.execute(stmt)
+        return bool(result.scalar())
+
+    async def exists_by_hash(
+        self, file_hash: str, source_id: UUID | None = None
+    ) -> bool:
+        conditions = [audio_jobs_table.c.file_hash == file_hash]
+        if source_id is not None:
+            conditions.append(audio_jobs_table.c.source_id == source_id)
+        stmt = sa.select(sa.exists().where(sa.and_(*conditions)))
         result = await self._conn.execute(stmt)
         return bool(result.scalar())
 

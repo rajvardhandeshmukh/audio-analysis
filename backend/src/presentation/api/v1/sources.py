@@ -41,7 +41,7 @@ async def list_sources(
     repos: RepositoryContainer = Depends(get_repos),
     payload: dict = Depends(require_role(UserRole.ANALYST)),  # type: ignore[type-arg]
 ) -> ApiResponse:  # type: ignore[type-arg]
-    sources = await repos.watcher_source.list()
+    sources = await repos.watcher_source.list_all()
     return ApiResponse.ok([s.model_dump() for s in sources])
 
 

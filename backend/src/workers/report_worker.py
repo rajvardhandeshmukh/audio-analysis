@@ -14,6 +14,7 @@ from src.domain.errors.domain_errors import (
     JobNotFoundError,
     TranscriptNotFoundError,
 )
+from src.application.services.report_exporter import export_report_as_text
 from src.infrastructure.container import RepositoryContainer
 from src.infrastructure.messaging.queue_config import QueueNames
 from src.infrastructure.messaging.schemas import AnalysisCompletedMessage, ReportCompletedMessage
@@ -81,6 +82,12 @@ class ReportWorker(BaseWorker):
             summary=analysis.summary,
         )
         saved_report = await repos.report.create(report)
+
+        try:
+            exported_path = export_report_as_text(job=job, analysis=analysis, transcript=transcript)
+            logger.info("report_worker.exported_text", path=exported_path)
+        except Exception as e:
+            logger.error("report_worker.export_failed", error=str(e))
 
         job.advance_to(JobStatus.COMPLETED)
         await repos.audio_job.update(job)

@@ -38,6 +38,7 @@ class CreateAudioJobCommand(BaseModel):
     source_id: UUID
     file_name: str = Field(..., min_length=1)
     original_path: str = Field(..., min_length=1)
+    file_hash: str | None = Field(default=None)
     storage_path: str = Field(..., min_length=1)
     created_by: UUID | None = Field(
         default=None,
@@ -108,6 +109,11 @@ class AudioJobService:
             original_path=cmd.original_path,
             source_id=cmd.source_id,
         )
+        if not already_exists and cmd.file_hash:
+            already_exists = await self._job_repo.exists_by_hash(
+                file_hash=cmd.file_hash,
+                source_id=cmd.source_id,
+            )
         if already_exists:
             raise DuplicateJobError(
                 f"File '{cmd.file_name}' from source '{cmd.source_id}' "
@@ -119,6 +125,7 @@ class AudioJobService:
             source_id=cmd.source_id,
             file_name=cmd.file_name,
             original_path=cmd.original_path,
+            file_hash=cmd.file_hash,
             storage_path=cmd.storage_path,
             created_by=cmd.created_by,
         )

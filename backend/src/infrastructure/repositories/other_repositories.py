@@ -143,6 +143,14 @@ class PostgresWatcherSourceRepository(WatcherSourceRepository):
         row = result.fetchone()
         return _source_row_to_entity(row) if row else None
 
+    async def list_all(self) -> list[WatcherSource]:
+        stmt = (
+            sa.select(audio_sources_table)
+            .order_by(audio_sources_table.c.created_at.asc())
+        )
+        result = await self._conn.execute(stmt)
+        return [_source_row_to_entity(row) for row in result.fetchall()]
+
     async def list_active(self) -> list[WatcherSource]:
         stmt = (
             sa.select(audio_sources_table)

@@ -93,6 +93,7 @@ audio_jobs_table = sa.Table(
     sa.Column("status", sa.String(50), nullable=False, server_default="pending"),
     sa.Column("file_name", sa.String(500), nullable=False),
     sa.Column("original_path", sa.Text, nullable=False),
+    sa.Column("file_hash", sa.String(64), nullable=True),
     sa.Column("storage_path", sa.Text, nullable=True),
     # Audio metadata stored as JSONB for flexibility
     sa.Column("metadata", sa.JSON, nullable=True),
@@ -114,6 +115,7 @@ audio_jobs_table = sa.Table(
     # Index for common query patterns
     sa.Index("ix_audio_jobs_status", "status"),
     sa.Index("ix_audio_jobs_source_id", "source_id"),
+    sa.Index("ix_audio_jobs_file_hash", "file_hash"),
     sa.Index(
         "ix_audio_jobs_original_path_source",
         "original_path",

@@ -53,6 +53,13 @@ class AudioJobRepository(ABC):
         ...
 
     @abstractmethod
+    async def exists_by_hash(
+        self, file_hash: str, source_id: UUID | None = None
+    ) -> bool:
+        """Idempotency check — returns True if a file with this hash was already queued."""
+        ...
+
+    @abstractmethod
     async def list_all(self, limit: int = 100, offset: int = 0) -> list[AudioJob]:
         """List all jobs regardless of status or source."""
         ...
@@ -120,6 +127,9 @@ class WatcherSourceRepository(ABC):
 
     @abstractmethod
     async def get_by_id(self, source_id: UUID) -> WatcherSource | None: ...
+
+    @abstractmethod
+    async def list_all(self) -> list[WatcherSource]: ...
 
     @abstractmethod
     async def list_active(self) -> list[WatcherSource]: ...

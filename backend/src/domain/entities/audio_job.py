@@ -34,6 +34,9 @@ class AudioJob(BaseModel):
     status: JobStatus = Field(default=JobStatus.PENDING)
     file_name: str = Field(..., min_length=1, description="Original audio file name")
     original_path: str = Field(..., description="Path on source filesystem")
+    file_hash: str | None = Field(
+        default=None, description="SHA-256 fingerprint of the audio file"
+    )
     storage_path: str | None = Field(
         default=None, description="Path in object storage after ingestion"
     )

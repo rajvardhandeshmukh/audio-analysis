@@ -11,6 +11,8 @@ Usage:
 """
 
 import logging
+import logging.handlers
+from pathlib import Path
 import sys
 
 import structlog
@@ -71,9 +73,17 @@ def configure_logging(log_level: str = "INFO") -> None:
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(formatter)
 
+    log_dir = Path("D:/projects/audio-analysis/logs")
+    log_dir.mkdir(parents=True, exist_ok=True)
+    file_handler = logging.handlers.TimedRotatingFileHandler(
+        log_dir / "audio_analysis.log", when="midnight", backupCount=14, encoding="utf-8"
+    )
+    file_handler.setFormatter(formatter)
+
     root_logger = logging.getLogger()
     root_logger.handlers.clear()
     root_logger.addHandler(handler)
+    root_logger.addHandler(file_handler)
     root_logger.setLevel(getattr(logging, log_level.upper(), logging.INFO))
 
     # Silence noisy third-party loggers
