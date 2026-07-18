@@ -5,6 +5,9 @@ import os
 
 BASE_URL = "http://127.0.0.1:8000/api/v1"
 
+# HTTP Client with extended timeout for slow/computationally expensive requests
+http_client = httpx.Client(timeout=30.0)
+
 st.set_page_config(page_title="Audio Analysis Pipeline", page_icon="🎙️", layout="wide")
 
 # Initialize Session State
@@ -25,7 +28,7 @@ if not st.session_state.token:
         
         if submit:
             with st.spinner("Logging in..."):
-                r = httpx.post(f"{BASE_URL}/auth/login", json={"email": email, "password": password})
+                r = http_client.post(f"{BASE_URL}/auth/login", json={"email": email, "password": password})
                 if r.status_code == 200:
                     st.session_state.token = r.json()["data"]["access_token"]
                     st.sidebar.success("Logged in successfully!")
@@ -65,7 +68,7 @@ with nav_tab1:
             # 1. Ensure Source exists
             if not st.session_state.source_id:
                 with st.spinner("Setting up storage source..."):
-                    r = httpx.post(f"{BASE_URL}/sources", json={
+                    r = http_client.post(f"{BASE_URL}/sources", json={
                         "name": "Streamlit Uploads",
                         "source_type": "local_filesystem",
                         "path": "/streamlit_uploads",
@@ -76,7 +79,7 @@ with nav_tab1:
                         if r.status_code != 409:
                             st.session_state.source_id = r.json()["data"]["id"]
                         else:
-                            sources_r = httpx.get(f"{BASE_URL}/sources", headers=headers)
+                            sources_r = http_client.get(f"{BASE_URL}/sources", headers=headers)
                             st.session_state.source_id = sources_r.json()["data"][0]["id"]
                     else:
                         st.error("Failed to create source.")
@@ -84,7 +87,7 @@ with nav_tab1:
 
             # 2. Get Presigned URL
             with st.spinner("Getting upload permissions..."):
-                r = httpx.post(f"{BASE_URL}/uploads/presign", json={
+                r = http_client.post(f"{BASE_URL}/uploads/presign", json={
                     "file_name": uploaded_file.name,
                     "source_id": st.session_state.source_id
                 }, headers=headers)
@@ -99,14 +102,14 @@ with nav_tab1:
             # 3. Upload to MinIO
             with st.spinner("Uploading file to secure storage..."):
                 audio_bytes = uploaded_file.read()
-                upload_r = httpx.put(upload_url, content=audio_bytes, headers={"Content-Type": "audio/mpeg"})
+                upload_r = http_client.put(upload_url, content=audio_bytes, headers={"Content-Type": "audio/mpeg"})
                 if upload_r.status_code not in (200, 204):
                     st.error("Failed to upload to storage.")
                     st.stop()
 
             # 4. Confirm Job
             with st.spinner("Creating analysis job..."):
-                r = httpx.post(f"{BASE_URL}/uploads/confirm", json={
+                r = http_client.post(f"{BASE_URL}/uploads/confirm", json={
                     "source_id": st.session_state.source_id,
                     "file_name": uploaded_file.name,
                     "storage_key": storage_key
@@ -133,7 +136,7 @@ with nav_tab1:
         
         while not job_completed and not job_failed:
             try:
-                r = httpx.get(f"{BASE_URL}/jobs/{st.session_state.job_id}", headers=headers)
+                r = http_client.get(f"{BASE_URL}/jobs/{st.session_state.job_id}", headers=headers)
                 if r.status_code == 200:
                     status = r.json()["data"]["status"]
                     
@@ -167,8 +170,8 @@ with nav_tab1:
             
             res_tab1, res_tab2, res_tab3 = st.tabs(["AI Coaching & Scores", "Call Metrics", "Transcript"])
             
-            analysis_data = httpx.get(f"{BASE_URL}/jobs/{st.session_state.job_id}/analysis", headers=headers).json().get("data", {})
-            transcript_data = httpx.get(f"{BASE_URL}/jobs/{st.session_state.job_id}/transcript", headers=headers).json().get("data", {})
+            analysis_data = http_client.get(f"{BASE_URL}/jobs/{st.session_state.job_id}/analysis", headers=headers).json().get("data", {})
+            transcript_data = http_client.get(f"{BASE_URL}/jobs/{st.session_state.job_id}/transcript", headers=headers).json().get("data", {})
             
             with res_tab1:
                 col1, col2 = st.columns(2)
@@ -243,7 +246,7 @@ with nav_tab2:
         if save_watcher:
             patterns = [p.strip() for p in patterns_str.split(",") if p.strip()]
             with st.spinner("Configuring watcher source..."):
-                r = httpx.post(f"{BASE_URL}/sources", json={
+                r = http_client.post(f"{BASE_URL}/sources", json={
                     "name": source_name,
                     "source_type": "local_filesystem",
                     "path": watch_dir,
@@ -262,7 +265,7 @@ with nav_tab2:
         st.rerun()
         
     try:
-        r = httpx.get(f"{BASE_URL}/sources", headers=headers)
+        r = http_client.get(f"{BASE_URL}/sources", headers=headers)
         if r.status_code == 200:
             sources = r.json().get("data", [])
             if sources:
