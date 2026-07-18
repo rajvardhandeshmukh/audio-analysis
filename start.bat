@@ -10,6 +10,12 @@ powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort 8000, 8501, 9000
 
 echo.
 echo ==============================================================
+echo Running database migrations...
+echo ==============================================================
+call venv\Scripts\alembic.exe -c backend\alembic.ini upgrade head
+
+echo.
+echo ==============================================================
 echo Installing process manager (Honcho) if it is missing...
 echo ==============================================================
 pip install honcho -q
